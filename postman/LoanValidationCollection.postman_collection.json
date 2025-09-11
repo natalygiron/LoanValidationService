@@ -1,0 +1,145 @@
+{
+  "info": {
+    "name": "Loan Validation Collection",
+    "description": "Colección de pruebas para validar reglas de negocio del servicio de préstamos",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "R1 - Antigüedad de préstamos",
+      "item": [
+        {
+          "name": "✅ Sin préstamo reciente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}{{endpoint}}", "host": ["{{baseUrl}}"], "path": ["{{endpoint}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monthlySalary\": 2500,\n  \"requestedAmount\": 6000,\n  \"termMonths\": 24,\n  \"lastLoanDate\": \"2024-01-01\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": ["pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));"] }
+          }]
+        },
+        {
+          "name": "❌ Préstamo reciente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}{{endpoint}}", "host": ["{{baseUrl}}"], "path": ["{{endpoint}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monthlySalary\": 2500,\n  \"requestedAmount\": 6000,\n  \"termMonths\": 24,\n  \"lastLoanDate\": \"2025-08-01\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test(\"Eligible is false\", () => {",
+                "  const res = pm.response.json();",
+                "  pm.expect(res.eligible).to.eql(false);",
+                "  pm.expect(res.reasons).to.include(\"HAS_RECENT_LOANS\");",
+                "});"
+              ]
+            }
+          }]
+        }
+      ]
+    },
+    {
+      "name": "R2 - Plazo máximo",
+      "item": [
+        {
+          "name": "✅ Plazo válido",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}{{endpoint}}", "host": ["{{baseUrl}}"], "path": ["{{endpoint}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monthlySalary\": 2500,\n  \"requestedAmount\": 6000,\n  \"termMonths\": 24\n}"
+            }
+          }
+        },
+        {
+          "name": "❌ Plazo inválido",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}{{endpoint}}", "host": ["{{baseUrl}}"], "path": ["{{endpoint}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monthlySalary\": 2500,\n  \"requestedAmount\": 6000,\n  \"termMonths\": 40\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "R3 - Capacidad de pago",
+      "item": [
+        {
+          "name": "✅ Capacidad suficiente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}{{endpoint}}", "host": ["{{baseUrl}}"], "path": ["{{endpoint}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monthlySalary\": 2500,\n  \"requestedAmount\": 6000,\n  \"termMonths\": 24\n}"
+            }
+          }
+        },
+        {
+          "name": "❌ Capacidad insuficiente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}{{endpoint}}", "host": ["{{baseUrl}}"], "path": ["{{endpoint}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monthlySalary\": 1000,\n  \"requestedAmount\": 6000,\n  \"termMonths\": 12\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "R4 - Datos válidos",
+      "item": [
+        {
+          "name": "❌ Salario inválido",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}{{endpoint}}", "host": ["{{baseUrl}}"], "path": ["{{endpoint}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monthlySalary\": 0,\n  \"requestedAmount\": 6000,\n  \"termMonths\": 24\n}"
+            }
+          }
+        },
+        {
+          "name": "❌ Monto inválido",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}{{endpoint}}", "host": ["{{baseUrl}}"], "path": ["{{endpoint}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monthlySalary\": 2500,\n  \"requestedAmount\": -100,\n  \"termMonths\": 24\n}"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "endpoint", "value": "loan-validations" }
+  ]
+}
