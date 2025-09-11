@@ -2,12 +2,15 @@ package com.bootcamp.loanvalidationms.service.rules;
 
 import com.bootcamp.loanvalidationms.domain.dto.LoanValidationRequest;
 import com.bootcamp.loanvalidationms.service.ValidationRule;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class LoanHistoryRule implements ValidationRule {
 
     private final Clock clock;
@@ -18,17 +21,14 @@ public class LoanHistoryRule implements ValidationRule {
 
     @Override
     public Mono<List<String>> validate(LoanValidationRequest req) {
-        if (req.getLastLoanDate() == null) {
-            return Mono.just(List.of());
+        List<String> errors = new ArrayList<>();
+        if (req.getLastLoanDate() != null) {
+            LocalDate today = LocalDate.now(clock);
+            LocalDate since = today.minusMonths(3); // incluyente
+            if (!req.getLastLoanDate().isBefore(since)) {
+                errors.add("ANTIGUEDAD_INSUFICIENTE: préstamo en los últimos 3 meses");
+            }
         }
-
-        LocalDate today = LocalDate.now(clock);
-        LocalDate since = today.minusMonths(3);
-
-        if (!req.getLastLoanDate().isBefore(since)) {
-            return Mono.just(List.of("El solicitante tiene préstamos en los últimos 3 meses"));
-        }
-
-        return Mono.just(List.of());
+        return Mono.just(errors);
     }
 }
