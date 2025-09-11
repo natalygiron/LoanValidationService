@@ -2,28 +2,31 @@ package com.bootcamp.loanvalidationms.service.rules;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
 import com.bootcamp.loanvalidationms.domain.dto.LoanValidationRequest;
+import com.bootcamp.loanvalidationms.service.ValidationRule;
 
 @Component
-public class LoanHistoryRule {
+public class LoanHistoryRule implements ValidationRule {
 
-  // Para tests puedes sobrecargar ctor e inyectar un Clock fijo.
-  private final Clock clock = Clock.systemUTC();
+  private final Clock clock;
 
-  public void apply(LoanValidationRequest request, List<String> reasons) {
-    if (request.getLastLoanDate() == null)
-      return;
+  public LoanHistoryRule() {
+    this.clock = Clock.systemUTC();
+  }
 
-    LocalDate today = LocalDate.now(clock);
-    LocalDate since = today.minusMonths(3); // incluyente
-    // falla si lastLoanDate >= since
-    if (!request.getLastLoanDate().isBefore(since)) {
-      reasons.add("ANTIGUEDAD_INSUFICIENTE");
-    }
+  public LoanHistoryRule(Clock clock) {
+    this.clock = clock;
+  }
+
+  @Override
+  public Optional<String> apply(LoanValidationRequest request) {
+    return Optional.ofNullable(request.getLastLoanDate())
+        .filter(date -> !date.isBefore(LocalDate.now(clock).minusMonths(3)))
+        .map(date -> "HAS_RECENT_LOANS");
   }
 }
 

@@ -1,49 +1,80 @@
 package com.bootcamp.loanvalidationms;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.bootcamp.loanvalidationms.domain.dto.LoanValidationRequest;
-import com.bootcamp.loanvalidationms.domain.dto.LoanValidationResult;
 import com.bootcamp.loanvalidationms.service.rules.PaymentCapacityRule;
 
+@ExtendWith(MockitoExtension.class)
 class PaymentCapacityRuleTest {
 
-    private final PaymentCapacityRule rule = new PaymentCapacityRule();
+    private PaymentCapacityRule rule;
+
+    @BeforeEach
+    void setup() {
+        rule = new PaymentCapacityRule();
+    }
 
     @Test
-    void shouldAddReasonWhenPaymentExceedsCapacity() {
-        LoanValidationRequest request = LoanValidationRequest.builder()
+    void shouldReturnEmptyWhenPaymentIsWithinLimit() {
+        var request = LoanValidationRequest.builder()
+                .monthlySalary(BigDecimal.valueOf(2500))
+                .requestedAmount(BigDecimal.valueOf(6000))
+                .termMonths(24)
+                .build();
+
+        assertTrue(rule.apply(request).isEmpty());
+    }
+
+    @Test
+    void shouldReturnErrorWhenPaymentExceedsLimit() {
+        var request = LoanValidationRequest.builder()
                 .monthlySalary(BigDecimal.valueOf(1000))
                 .requestedAmount(BigDecimal.valueOf(6000))
                 .termMonths(12)
                 .build();
 
-        List<String> reasons = new ArrayList<>();
-        LoanValidationResult result = rule.apply(request, reasons);
-
-        assertFalse(result.isEligible());
-        assertTrue(reasons.contains("CAPACIDAD_INSUFICIENTE"));
+        assertEquals(Optional.of("CAPACIDAD_INSUFICIENTE"), rule.apply(request));
     }
 
     @Test
-    void shouldNotAddReasonWhenPaymentIsWithinCapacity() {
-        LoanValidationRequest request = LoanValidationRequest.builder()
-                .monthlySalary(BigDecimal.valueOf(3000))
+    void shouldReturnEmptyWhenSalaryIsNull() {
+        var request = LoanValidationRequest.builder()
+                .monthlySalary(null)
+                .requestedAmount(BigDecimal.valueOf(6000))
+                .termMonths(12)
+                .build();
+
+        assertEquals(Optional.of("CAPACIDAD_INSUFICIENTE"), rule.apply(request));
+    }
+
+    @Test
+    void shouldReturnEmptyWhenTermIsInvalid() {
+        var request = LoanValidationRequest.builder()
+                .monthlySalary(BigDecimal.valueOf(2500))
+                .requestedAmount(BigDecimal.valueOf(6000))
+                .termMonths(0)
+                .build();
+
+        assertTrue(rule.apply(request).isEmpty());
+    }
+
+    @Test
+    void shouldCalculateMonthlyPaymentCorrectly() {
+        var request = LoanValidationRequest.builder()
                 .requestedAmount(BigDecimal.valueOf(6000))
                 .termMonths(24)
                 .build();
 
-        List<String> reasons = new ArrayList<>();
-        LoanValidationResult result = rule.apply(request, reasons);
-
-        assertTrue(result.isEligible());
-        assertTrue(reasons.isEmpty());
+        var expected = BigDecimal.valueOf(250.00).setScale(2);
+        assertEquals(expected, rule.calculateMonthlyPayment(request));
     }
 }

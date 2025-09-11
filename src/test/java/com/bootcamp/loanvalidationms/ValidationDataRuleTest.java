@@ -1,127 +1,67 @@
 package com.bootcamp.loanvalidationms;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import com.bootcamp.loanvalidationms.domain.dto.LoanValidationRequest;
 import com.bootcamp.loanvalidationms.service.rules.ValidationDataRule;
 
+@ExtendWith(MockitoExtension.class)
 class ValidationDataRuleTest {
 
-    private final ValidationDataRule rule = new ValidationDataRule();
+    private ValidationDataRule rule;
+
+    @BeforeEach
+    void setup() {
+        rule = new ValidationDataRule();
+    }
 
     @Test
-    void shouldAddInvalidReasonForNullRequestedAmount() {
-        LoanValidationRequest request = LoanValidationRequest.builder()
+    void shouldReturnEmptyListWhenDataIsValid() {
+        var request = LoanValidationRequest.builder()
                 .monthlySalary(BigDecimal.valueOf(2500))
-                .requestedAmount(null)
-                .termMonths(12)
+                .requestedAmount(BigDecimal.valueOf(6000))
                 .build();
 
-        List<String> reasons = new ArrayList<>();
-        rule.apply(request, reasons);
-
-        assertTrue(reasons.contains("DATOS_INVALIDOS"));
+        assertTrue(rule.apply(request).isEmpty());
     }
 
     @Test
-    void shouldAddInvalidReasonForZeroRequestedAmount() {
-        LoanValidationRequest request = LoanValidationRequest.builder()
-                .monthlySalary(BigDecimal.valueOf(2500))
-                .requestedAmount(BigDecimal.ZERO)
-                .termMonths(12)
-                .build();
-
-        List<String> reasons = new ArrayList<>();
-        rule.apply(request, reasons);
-
-        assertTrue(reasons.contains("DATOS_INVALIDOS"));
-    }
-
-    @Test
-    void shouldAddInvalidReasonWhenRequestedAmountIsNegative() {
-        LoanValidationRequest request = LoanValidationRequest.builder()
-                .monthlySalary(BigDecimal.valueOf(2500))
-                .requestedAmount(BigDecimal.valueOf(-2500))
-                .termMonths(12)
-                .build();
-
-        List<String> reasons = new ArrayList<>();
-        rule.apply(request, reasons);
-
-        assertTrue(reasons.contains("DATOS_INVALIDOS"));
-    }
-
-    @Test
-    void shouldNotAddReasonForValidRequestedAmount() {
-        LoanValidationRequest request = LoanValidationRequest.builder()
-                .monthlySalary(BigDecimal.valueOf(2500))
-                .requestedAmount(BigDecimal.valueOf(5000))
-                .termMonths(12)
-                .build();
-
-        List<String> reasons = new ArrayList<>();
-        rule.apply(request, reasons);
-
-        assertTrue(reasons.isEmpty());
-    }
-
-    @Test
-    void shouldAddReasonWhenSalaryIsNull() {
-        LoanValidationRequest request = LoanValidationRequest.builder()
-                .monthlySalary(null)
-                .requestedAmount(BigDecimal.valueOf(5000))
-                .termMonths(12)
-                .build();
-
-        List<String> reasons = new ArrayList<>();
-        rule.apply(request, reasons);
-
-        assertTrue(reasons.contains("DATOS_INVALIDOS"));
-    }
-
-    @Test
-    void shouldAddReasonWhenSalaryIsZero() {
-        LoanValidationRequest request = LoanValidationRequest.builder()
+    void shouldReturnErrorWhenSalaryIsZero() {
+        var request = LoanValidationRequest.builder()
                 .monthlySalary(BigDecimal.ZERO)
-                .requestedAmount(BigDecimal.valueOf(5000))
-                .termMonths(12)
+                .requestedAmount(BigDecimal.valueOf(6000))
                 .build();
 
-        List<String> reasons = new ArrayList<>();
-        rule.apply(request, reasons);
-
+        var reasons = rule.apply(request);
         assertTrue(reasons.contains("DATOS_INVALIDOS"));
     }
 
     @Test
-    void shouldAddReasonWhenSalaryIsNegative() {
-        LoanValidationRequest request = LoanValidationRequest.builder()
-                .monthlySalary(BigDecimal.valueOf(-100))
-                .requestedAmount(BigDecimal.valueOf(5000))
-                .termMonths(12)
-                .build();
-
-        List<String> reasons = new ArrayList<>();
-        rule.apply(request, reasons);
-
-        assertTrue(reasons.contains("DATOS_INVALIDOS"));
-    }
-
-    @Test
-    void shouldNotAddReasonWhenSalaryIsPositive() {
-        LoanValidationRequest request = LoanValidationRequest.builder()
+    void shouldReturnErrorWhenRequestedAmountIsNegative() {
+        var request = LoanValidationRequest.builder()
                 .monthlySalary(BigDecimal.valueOf(2500))
-                .requestedAmount(BigDecimal.valueOf(5000))
-                .termMonths(12)
+                .requestedAmount(BigDecimal.valueOf(-100))
                 .build();
 
-        List<String> reasons = new ArrayList<>();
-        rule.apply(request, reasons);
+        var reasons = rule.apply(request);
+        assertTrue(reasons.contains("DATOS_INVALIDOS"));
+    }
 
-        assertTrue(reasons.isEmpty());
+    @Test
+    void shouldReturnBothErrorsWhenBothFieldsAreInvalid() {
+        var request = LoanValidationRequest.builder()
+                .monthlySalary(BigDecimal.ZERO)
+                .requestedAmount(BigDecimal.valueOf(-100))
+                .build();
+
+        var reasons = rule.apply(request);
+        assertEquals(2, reasons.size());
+        assertTrue(reasons.contains("DATOS_INVALIDOS"));
     }
 }

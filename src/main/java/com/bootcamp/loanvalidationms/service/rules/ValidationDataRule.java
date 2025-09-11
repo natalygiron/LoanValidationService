@@ -2,6 +2,9 @@ package com.bootcamp.loanvalidationms.service.rules;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Component;
 
@@ -10,20 +13,17 @@ import com.bootcamp.loanvalidationms.domain.dto.LoanValidationRequest;
 @Component
 public class ValidationDataRule {
 
-  public void apply(LoanValidationRequest request, List<String> reasons) {
-    validateSalary(request.getMonthlySalary(), reasons);
-    validateRequestedAmount(request.getRequestedAmount(), reasons);
+  public List<String> apply(LoanValidationRequest request) {
+    return Stream
+        .of(validatePositive(request.getMonthlySalary()),
+            validatePositive(request.getRequestedAmount()))
+        .flatMap(Optional::stream).collect(Collectors.toList());
   }
 
-  private void validateSalary(BigDecimal salary, List<String> reasons) {
-    if (salary == null || salary.compareTo(BigDecimal.ZERO) <= 0) {
-      reasons.add("DATOS_INVALIDOS");
+  private Optional<String> validatePositive(BigDecimal value) {
+    if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
+      return Optional.of("DATOS_INVALIDOS");
     }
-  }
-
-  private void validateRequestedAmount(BigDecimal amount, List<String> reasons) {
-    if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-      reasons.add("DATOS_INVALIDOS");
-    }
+    return Optional.empty();
   }
 }

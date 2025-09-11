@@ -1,22 +1,21 @@
 package com.bootcamp.loanvalidationms.service.rules;
 
-import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
 import com.bootcamp.loanvalidationms.domain.dto.LoanValidationRequest;
+import com.bootcamp.loanvalidationms.service.ValidationRule;
 
 @Component
-public class TermMonthsRule {
+public class TermMonthsRule implements ValidationRule {
 
-  public void apply(LoanValidationRequest request, List<String> reasons) {
+  @Override
+  public Optional<String> apply(LoanValidationRequest request) {
     Integer term = request.getTermMonths();
-    if (term == null) {
-      reasons.add("PLAZO_INVALIDO"); // faltante
-      return;
+    if (term == null || term < 1 || term > 36) {
+      return Optional.of("PLAZO_MAXIMO_SUPERADO");
     }
-    if (term < 1 || term > 36) {
-      reasons.add("PLAZO_INVALIDO"); // fuera de rango
-    }
+    return Optional.empty();
   }
 }
