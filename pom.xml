@@ -37,6 +37,7 @@
         <checkstyle.version>10.17.0</checkstyle.version>
         <jacoco.version>0.8.10</jacoco.version>
         <formatter.plugin.version>2.27.0</formatter.plugin.version>
+        <javaformat.plugin.version>0.0.47</javaformat.plugin.version>
     </properties>
 
     <dependencies>
@@ -72,6 +73,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.projectreactor</groupId>
@@ -122,6 +129,7 @@
                 </configuration>
                 <executions>
                     <execution>
+                        <id>validate</id>
                         <phase>verify</phase>
                         <goals>
                             <goal>check</goal>
@@ -143,7 +151,7 @@
                     </execution>
                     <execution>
                         <id>report</id>
-                        <phase>test</phase>
+                        <phase>verify</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
@@ -181,7 +189,11 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>io.spring.javaformat</groupId>
+                <artifactId>spring-javaformat-maven-plugin</artifactId>
+                <version>${javaformat.plugin.version}</version>
+            </plugin>
         </plugins>
     </build>
-
 </project>

@@ -10,7 +10,7 @@
 	<!-- Checks que sí van dentro de TreeWalker -->
 	<module name="TreeWalker">
 		<module name="PackageName">
-			<property name="format" value="org\.taller01\.accountms(\..+)?" />
+			<property name="format" value="com\.bootcamp\.loanvalidationms(\..+)?" />
 		</module>
 
 		<module name="TypeName" />
@@ -22,10 +22,11 @@
 		</module>
 
 		<module name="UnusedImports" />
-
+		<module name="AvoidStarImport" />
 		<module name="ImportOrder">
 			<property name="ordered" value="true" />
 			<property name="separated" value="true" />
+			<property name="groups" value="java,javax,org,reactor,com,lombok" />
 		</module>
 	</module>
 </module>
